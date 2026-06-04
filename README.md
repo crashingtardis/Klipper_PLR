@@ -36,7 +36,15 @@ LOG_Z
 6. To resume printing after a power cut, simply execute the 'RESUME_INTERRUPTED' macro in the MAINSAIL console or via the Macro button on the MAINSAIL dashboard.
 
 ## Known Bugs:
-The preview image of the gcode file is not rebuilt.
+(none currently)
+
+## Notes:
+- The preview image (thumbnail) of the resume file is rebuilt: plr.sh copies the
+  original gcode header (slicer signature + thumbnail blocks) so Moonraker /
+  Mainsail / KlipperScreen show the preview on the resume file.
+- LOG_Z must be present (uncommented) in the slicer "Before layer change G-code"
+  so power_resume_z is updated each layer; otherwise the resume Z height is not
+  captured and RESUME_INTERRUPTED needs Z_HEIGHT passed manually.
  
 
 
