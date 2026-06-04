@@ -2,12 +2,29 @@
 #SD_PATH=~/gcode_files
 #cat ${2} > /tmp/plrtmpA.$$
 mkdir -p /home/pi/printer_data/gcodes/plr/
-filepath=$(sed -n "s/.*filepath *= *'\([^']*\)'.*/\1/p" /home/pi/printer_data/config/variables.cfg)
-filepath=$(printf "$filepath")
+# Read variables.cfg robustly: the values are Python reprs written by Klipper's
+# save_variables. repr() uses double quotes when the string contains an
+# apostrophe, so a single-quote sed would miss names like "Zoe's_dagger.gcode".
+# ast.literal_eval handles every quoting/escaping case.
+read_plr_var() {
+  python3 - "$1" <<'PYEOF'
+import sys, ast, configparser
+cfg = configparser.ConfigParser()
+cfg.read('/home/pi/printer_data/config/variables.cfg')
+key = sys.argv[1]
+for sec in cfg.sections():
+    if cfg.has_option(sec, key):
+        try:
+            sys.stdout.write(str(ast.literal_eval(cfg.get(sec, key))))
+        except (ValueError, SyntaxError):
+            sys.stdout.write(cfg.get(sec, key))
+        break
+PYEOF
+}
+filepath=$(read_plr_var filepath)
 echo "$filepath"
 #SD_PATH=$(dirname "$filepath")
-last_file=$(sed -n "s/.*last_file *= *'\([^']*\)'.*/\1/p" /home/pi/printer_data/config/variables.cfg)
-last_file=$(printf "$last_file")
+last_file=$(read_plr_var last_file)
 echo "$last_file"
 plr=$last_file
 echo "plr=$plr" 
