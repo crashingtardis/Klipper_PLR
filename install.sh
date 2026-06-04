@@ -35,6 +35,14 @@ echo "Klipper directory: $KLIPPER_DIR"
 PROJECT_DIR="$PWD"
 echo "Project directory: $PROJECT_DIR"
 
+# Repo renomme YUMI_PLR -> Yumi_PLR. On aligne le remote du clone existant sur le
+# nouveau nom canonique, sinon Moonraker update_manager detecte un mismatch entre
+# l'origin configure et le remote du clone -> repo marque invalide (pas d'OTA).
+if [ -d "$PROJECT_DIR/.git" ]; then
+  git -C "$PROJECT_DIR" remote set-url origin https://github.com/Yumi-Lab/Yumi_PLR.git \
+    && echo "git remote aligned to Yumi_PLR.git" || echo "Warning: could not set git remote"
+fi
+
 # Define the cleanup function
 #function cleanup {
 #  
@@ -143,7 +151,7 @@ else
 [update_manager YUMI_PLR]
 type: git_repo
 path: ~/YUMI_PLR
-origin: https://github.com/Yumi-Lab/YUMI_PLR.git
+origin: https://github.com/Yumi-Lab/Yumi_PLR.git
 primary_branch: main
 system_dependencies: system_dependencies.json
 is_system_service: False
