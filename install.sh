@@ -10,9 +10,8 @@ OWNER=""
 if [ -n "$SUDO_USER" ]; then
     echo "shell script execute by with sudo :  user is $SUDO_USER"
     if [ "$SUDO_USER" = "runner" ]; then
-        # Définir USER_HOME spécifiquement pour 'runner' et définir OWNER à 'pi'
-        USER_HOME="/home/pi"
-        OWNER="pi"
+        USER_HOME="/home/{USER_HOME}"
+        OWNER="{USER_HOME}"
     else
         USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
         OWNER="$SUDO_USER"
@@ -35,12 +34,46 @@ echo "Klipper directory: $KLIPPER_DIR"
 PROJECT_DIR="$PWD"
 echo "Project directory: $PROJECT_DIR"
 
-# Repo renomme YUMI_PLR -> Yumi_PLR. On aligne le remote du clone existant sur le
-# nouveau nom canonique, sinon Moonraker update_manager detecte un mismatch entre
-# l'origin configure et le remote du clone -> repo marque invalide (pas d'OTA).
+# Prompt user to select Klipper or Kalico
+echo ""
+echo "=========================================="
+echo "Which firmware are you using?"
+echo "=========================================="
+echo "1) Klipper (installs to klippy/extras/)"
+echo ""
+echo "2) Kalico  (installs to klippy/plugins/)"
+echo "Installing in the plugins folder for Kalico"
+echo "prevents the repo from showing up as dirty in Mainsail."
+echo ""
+echo "Remember to add the following to you printer.cfg:"
+echo "[danger_options]"
+echo "allow_plugin_override: True"
+echo ""
+read -p "Please enter your choice (1 or 2): " FIRMWARE_CHOICE
+
+case $FIRMWARE_CHOICE in
+    1)
+        FIRMWARE="klipper"
+        INSTALL_DIR="$KLIPPER_DIR/klippy/extras"
+        echo "Selected: Klipper - Installing to $INSTALL_DIR"
+        ;;
+    2)
+        FIRMWARE="kalico"
+        INSTALL_DIR="$KLIPPER_DIR/klippy/plugins"
+        echo "Selected: Kalico - Installing to $INSTALL_DIR"
+        ;;
+    *)
+        echo "Invalid choice. Defaulting to Klipper."
+        FIRMWARE="klipper"
+        INSTALL_DIR="$KLIPPER_DIR/klippy/extras"
+        ;;
+esac
+
+echo ""
+
 if [ -d "$PROJECT_DIR/.git" ]; then
-  git -C "$PROJECT_DIR" remote set-url origin https://github.com/Yumi-Lab/Yumi_PLR.git \
-    && echo "git remote aligned to Yumi_PLR.git" || echo "Warning: could not set git remote"
+  git -C "$PROJECT_DIR" remote set-url origin https://github.com/crashingtardis/Klipper_PLR.git \
+    && echo "git remote aligned to Klipper_PLR.git" || echo "Warning: could not set git remote"
 fi
 
 # Define the cleanup function
@@ -58,10 +91,10 @@ else
     touch $USER_HOME/printer_data/config/variables.cfg && echo "variables.cfg created successfully." || echo "Error creating variables.cfg."
   fi
 
-  # Copy the project files to the Klipper directory
+    # Copy the project files to the Klipper directory
   cp -f $PROJECT_DIR/plr.cfg $USER_HOME/printer_data/config/ && echo "plr.cfg copied successfully." || echo "Error copying plr.cfg."
-  rm -f "$KLIPPER_DIR/klippy/extras/gcode_shell_command.py"
-  ln -sf "$PROJECT_DIR/gcode_shell_command.py" "$KLIPPER_DIR/klippy/extras/gcode_shell_command.py" && echo "gcode_shell_command.py -> symlinked" || echo "Error symlinking gcode_shell_command.py"
+  rm -f "$INSTALL_DIR/gcode_shell_command.py"
+  ln -sf "$PROJECT_DIR/gcode_shell_command.py" "$INSTALL_DIR/gcode_shell_command.py" && echo "gcode_shell_command.py -> symlinked" || echo "Error symlinking gcode_shell_command.py"
   # Use rsync to copy, overwriting existing files and create the folder if it does not exist
   
   # Make plr.sh & clear_plr.sh executable
@@ -148,10 +181,10 @@ else
   echo "Creating a new update_plr.cfg file with cat EOF..."
   cat > $USER_HOME/printer_data/config/update_plr.cfg << EOF
 # plr-klipper update_manager entry
-[update_manager YUMI_PLR]
+[update_manager Klipper_PLR]
 type: git_repo
-path: ~/YUMI_PLR
-origin: https://github.com/Yumi-Lab/Yumi_PLR.git
+path: ~/Klipper_PLR
+origin: https://github.com/crashingtardis/Klipper_PLR.git
 primary_branch: main
 system_dependencies: system_dependencies.json
 is_system_service: False
@@ -170,7 +203,7 @@ if [ -n "$SUDO_USER" ]; then
     echo "Répertoire personnel de l'utilisateur réel (USER_HOME) : $USER_HOME"
     
     echo "Exécution de la commande chown pour $USER_HOME/printer_data/config/ avec $OWNER:$OWNER"
-    # Exécuter la commande chown avec les droits de l'utilisateur spécifique (pi:pi pour runner, sinon SUDO_USER)
+    
     chown -R "$OWNER":"$OWNER" "$USER_HOME/printer_data/config/"
     echo "Commande chown exécutée."
 else
