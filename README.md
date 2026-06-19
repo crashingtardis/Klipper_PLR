@@ -1,4 +1,4 @@
-# PLR Klipper
+# Klipper PLR (Power Loss Recovery)
 
 Klipper PLR (Forked from YUMI_PLR) is a simple print recovery system for Klipper & Kalico, a 3D printer firmware. It allows you to resume prints after a power loss or other types of MCU disconnection interruption. Please note there is no guarantee that it will work in 100% of cases because the Z-axis must not have moved, so do not touch the machine in case of a power cut.
 
@@ -8,6 +8,11 @@ To install Klipper_PLR, follow the steps below:
 
 ## Installation
 1. Clone the Klipper_PLR Klipper repository from GitHub to your local machine:
+
+Please note that if you are using Klipper, plr.cfg will be installed in /klipper/klippy/extras/
+If you are using Kalico, plr.cfg will be installed in /klipper/klippy/plugins
+For Kalico, this is to avoid the repo showing as dirty in Mainsail.
+
 ```bash
 git clone https://github.com/crashingtardis/Klipper_PLR.git
 cd Klipper_PLR
