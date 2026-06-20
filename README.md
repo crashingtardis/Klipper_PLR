@@ -41,7 +41,7 @@ LOG_Z
 ## Uninstallation:
 ```bash
 cd Klipper_PLR
-./install.sh
+./uninstall.sh
 ```
 
 ## Known Bugs:
