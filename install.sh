@@ -1,12 +1,19 @@
 #!/bin/bash
 
-# Récupérer l'utilisateur qui exécute le script
+# Check if script is being run with sudo, if not, re-invoke with sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "This script must be run with sudo. Re-invoking with sudo..."
+    sudo "$0" "$@"
+    exit $?
+fi
+
+# Get the user executing the script
 REAL_USER="$USER"
 
-# Initialisation de la variable OWNER
+# Initialize the OWNER variable
 OWNER=""
 
-# Récupérer le répertoire de l'utilisateur
+# Get the user's home directory
 if [ -n "$SUDO_USER" ]; then
     echo "shell script executed with sudo: user is $SUDO_USER"
     if [ "$SUDO_USER" = "runner" ]; then
@@ -82,7 +89,7 @@ if [ ! -f "$USER_HOME/printer_data/config/variables.cfg" ]; then
 fi
 
 # Copy the project files to the Klipper directory
-cp -f "$PROJECT_DIR/plr.cfg" "$USER_HOME/printer_data/config/" && echo "plr.cfg copied successfully." || echo "Error copying plr.cfg."
+cp -f "$PROJECT_DIR/plr.cfg" "$USER_HOME/printer_data/config/" && sed -i "s|\$USER_HOME|$USER_HOME|g" "$USER_HOME/printer_data/config/plr.cfg" && echo "plr.cfg copied and substituted successfully." || echo "Error copying plr.cfg."
 rm -f "$INSTALL_DIR/gcode_shell_command.py"
 ln -sf "$PROJECT_DIR/gcode_shell_command.py" "$INSTALL_DIR/gcode_shell_command.py" && echo "gcode_shell_command.py -> symlinked" || echo "Error symlinking gcode_shell_command.py"
 
