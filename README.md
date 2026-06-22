@@ -7,11 +7,7 @@ Having already installed Klipper or Kalico, Moonraker, and Mainsail (you can use
 To install Klipper_PLR, follow the steps below:
 
 ## Installation:
-1. Clone the Klipper_PLR Klipper repository from GitHub to your local machine:
-
-Please note that if you are using Klipper, plr.cfg will be installed in /klipper/klippy/extras/
-If you are using Kalico, plr.cfg will be installed in /klipper/klippy/plugins
-For Kalico, this is to avoid the repo showing as dirty in Mainsail.
+Clone the Klipper_PLR repository from GitHub to your local machine:
 
 ```bash
 git clone https://github.com/crashingtardis/Klipper_PLR.git
@@ -19,8 +15,29 @@ cd Klipper_PLR
 ./install.sh
 ```
 
-###start-gcode add in your slicer:
-```bash
+The installation script will:
+- Automatically invoke `sudo` if not already running with elevated privileges
+- Auto-detect your firmware (Klipper or Kalico) based on existing installations
+- Substitute `$USER_HOME` paths in configuration files for Klipper compatibility
+- Configure Moonraker for automatic updates
+- Create necessary configuration files
+
+**Note:** You do not need to manually specify `sudo` - the script handles it automatically.
+
+### Automatic Updates from Mainsail:
+After initial installation, Klipper_PLR will be available in Mainsail's update manager. When you update from Mainsail, the `install.sh` script will automatically run to update your configuration without any manual intervention.
+
+### Firmware Support:
+- If you are using **Klipper**, the plugin is installed in `/klipper/klippy/extras/`
+- If you are using **Kalico**, the plugin is installed in `/klipper/klippy/plugins/` (to prevent repo from showing as dirty in Mainsail)
+
+The installation script automatically detects which firmware you're using and installs to the correct location.
+
+### Slicer Configuration:
+Add the following G-code to your slicer settings:
+
+**Start G-code:**
+```gcode
 G31
 save_last_file
 SAVE_VARIABLE VARIABLE=was_interrupted VALUE=True
@@ -36,7 +53,7 @@ G31
 ```bash
 LOG_Z
 ```
-6. To resume printing after a power cut, simply execute the 'RESUME_INTERRUPTED' macro in the MAINSAIL console or via the Macro button on the MAINSAIL dashboard.
+To resume printing after a power cut, simply execute the 'RESUME_INTERRUPTED' macro in the MAINSAIL console or via the Macro button on the MAINSAIL dashboard.
 
 ## Uninstallation:
 ```bash

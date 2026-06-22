@@ -41,40 +41,21 @@ echo "Klipper directory: $KLIPPER_DIR"
 PROJECT_DIR="$PWD"
 echo "Project directory: $PROJECT_DIR"
 
-# Prompt user to select Klipper or Kalico
-echo ""
-echo "=========================================="
-echo "Which firmware are you using?"
-echo "=========================================="
-echo "1) Klipper (installs to klippy/extras/)"
-echo ""
-echo "2) Kalico  (installs to klippy/plugins/)"
-echo "Installing in the plugins folder for Kalico"
-echo "prevents the repo from showing up as dirty in Mainsail."
-echo ""
-echo "Remember to add the following to your printer.cfg:"
-echo "[danger_options]"
-echo "allow_plugin_override: True"
-echo ""
-read -p "Please enter your choice (1 or 2): " FIRMWARE_CHOICE
-
-case $FIRMWARE_CHOICE in
-    1)
-        FIRMWARE="klipper"
-        INSTALL_DIR="$KLIPPER_DIR/klippy/extras"
-        echo "Selected: Klipper - Installing to $INSTALL_DIR"
-        ;;
-    2)
-        FIRMWARE="kalico"
-        INSTALL_DIR="$KLIPPER_DIR/klippy/plugins"
-        echo "Selected: Kalico - Installing to $INSTALL_DIR"
-        ;;
-    *)
-        echo "Invalid choice. Defaulting to Klipper."
-        FIRMWARE="klipper"
-        INSTALL_DIR="$KLIPPER_DIR/klippy/extras"
-        ;;
-esac
+# Auto-detect firmware based on existing installations
+if [ -f "$KLIPPER_DIR/klippy/plugins/gcode_shell_command.py" ]; then
+    FIRMWARE="kalico"
+    INSTALL_DIR="$KLIPPER_DIR/klippy/plugins"
+    echo "Detected: Kalico - Installing to $INSTALL_DIR"
+elif [ -f "$KLIPPER_DIR/klippy/extras/gcode_shell_command.py" ]; then
+    FIRMWARE="klipper"
+    INSTALL_DIR="$KLIPPER_DIR/klippy/extras"
+    echo "Detected: Klipper - Installing to $INSTALL_DIR"
+else
+    # Default to Klipper if neither is detected
+    FIRMWARE="klipper"
+    INSTALL_DIR="$KLIPPER_DIR/klippy/extras"
+    echo "No existing installation detected. Defaulting to Klipper - Installing to $INSTALL_DIR"
+fi
 
 echo ""
 
@@ -185,8 +166,12 @@ primary_branch: main
 system_dependencies: system_dependencies.json
 is_system_service: False
 managed_services: klipper
+install_script: install.sh
 
 EOF
+
+# Make install.sh executable for Moonraker's automatic updates
+chmod +x "$PROJECT_DIR/install.sh" && echo "install.sh made executable." || echo "Warning: Could not make install.sh executable."
 
 # Check if the script is executed with sudo
 echo "Checking script execution with sudo..."
