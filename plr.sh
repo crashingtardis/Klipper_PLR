@@ -1,16 +1,17 @@
 #!/bin/bash
-#SD_PATH=$USER_HOME/gcode_files
+HOME_DIR="${USER_HOME:-$HOME}"
+#SD_PATH=$HOME_DIR/gcode_files
 #cat ${2} > /tmp/plrtmpA.$$
-mkdir -p $USER_HOME/printer_data/gcodes/plr/
+mkdir -p "$HOME_DIR/printer_data/gcodes/plr/"
 # Read variables.cfg robustly: the values are Python reprs written by Klipper's
 # save_variables. repr() uses double quotes when the string contains an
 # apostrophe, so a single-quote sed would miss names like "Zoe's_dagger.gcode".
 # ast.literal_eval handles every quoting/escaping case.
 read_plr_var() {
-  python3 - "$1" <<'PYEOF'
-import sys, ast, configparser, os
+  python3 - "$1" "$HOME_DIR/printer_data/config/variables.cfg" <<'PYEOF'
+import sys, ast, configparser
 cfg = configparser.ConfigParser()
-cfg.read(os.path.expanduser('$USER_HOME/printer_data/config/variables.cfg'))
+cfg.read(sys.argv[2])
 key = sys.argv[1]
 for sec in cfg.sections():
     if cfg.has_option(sec, key):
@@ -27,12 +28,12 @@ echo "$filepath"
 last_file=$(read_plr_var last_file)
 echo "$last_file"
 plr=$last_file
-echo "plr=$plr" 
-PLR_PATH=$USER_HOME/printer_data/gcodes/plr/
+echo "plr=$plr"
+PLR_PATH="$HOME_DIR/printer_data/gcodes/plr/"
 #echo "$SD_PATH"
-#SD_PATH=$USER_HOME/gcode_files
-#cat ${SD_PATH}/${2} > $USER_HOME/plrtmpA.$$
-cat "${filepath}" > $USER_HOME/plrtmpA.$$
+#SD_PATH=$HOME_DIR/gcode_files
+#cat ${SD_PATH}/${2} > $HOME_DIR/plrtmpA.$$
+cat "${filepath}" > "$HOME_DIR/plrtmpA.$$"
 
 # --- Thumbnail: rebuilds the preview of the resume file ---
 # We copy to the header of the plr/ file the header of the original up to the last
@@ -41,29 +42,29 @@ cat "${filepath}" > $USER_HOME/plrtmpA.$$
 # slicer and extracts the thumbnails) and the thumbnail blocks themselves. Without this,
 # the resume file would have no preview (see "Known Bug" in README).
 
-thumb_end=$(grep -n '; thumbnail end' $USER_HOME/plrtmpA.$$ | tail -1 | cut -d: -f1)
+thumb_end=$(grep -n '; thumbnail end' "$HOME_DIR/plrtmpA.$$" | tail -1 | cut -d: -f1)
 if [ -n "${thumb_end}" ]; then
-  head -n "${thumb_end}" $USER_HOME/plrtmpA.$$ > ${PLR_PATH}/"${plr}"
+  head -n "${thumb_end}" "$HOME_DIR/plrtmpA.$$" > ${PLR_PATH}/"${plr}"
 else
   : > ${PLR_PATH}/"${plr}"
 fi
 
-cat $USER_HOME/plrtmpA.$$ | sed -e '1,/Z'${1}'/ d' | sed -ne '/ Z/,$ p' | grep -m 1 ' Z' | sed -ne 's/.* Z\([^ ]*\).*/SET_KINEMATIC_POSITION Z=\1/p' >> ${PLR_PATH}/"${plr}"
+cat $HOME_DIR/plrtmpA.$$ | sed -e '1,/Z'${1}'/ d' | sed -ne '/ Z/,$ p' | grep -m 1 ' Z' | sed -ne 's/.* Z\([^ ]*\).*/SET_KINEMATIC_POSITION Z=\1/p' >> ${PLR_PATH}/"${plr}"
 #echo 'START_TEMPS' >> ${SD_PATH}/plr.gcode
 echo 'M118 START_TEMPS...' >> ${PLR_PATH}/"${plr}"
-cat $USER_HOME/plrtmpA.$$ | sed '/ Z'${1}'/q' | sed -ne '/\(M104\|M140\|M109\|M190\|M106\)/p' >> ${PLR_PATH}/"${plr}"
-cat $USER_HOME/plrtmpA.$$ | sed -ne '/;End of Gcode/,$ p' | tr '\n' ' ' | sed -ne 's/ ;[^ ]* //gp' | sed -ne 's/\\\\n/;/gp' | tr ';' '\n' | grep material_bed_temperature | sed -ne 's/.* = /M140 S/p' | head -1 >> ${PLR_PATH}/"${plr}"
-cat $USER_HOME/plrtmpA.$$ | sed -ne '/;End of Gcode/,$ p' | tr '\n' ' ' | sed -ne 's/ ;[^ ]* //gp' | sed -ne 's/\\\\n/;/gp' | tr ';' '\n' | grep material_print_temperature | sed -ne 's/.* = /M104 S/p' | head -1 >> ${PLR_PATH}/"${plr}"
-cat $USER_HOME/plrtmpA.$$ | sed -ne '/;End of Gcode/,$ p' | tr '\n' ' ' | sed -ne 's/ ;[^ ]* //gp' | sed -ne 's/\\\\n/;/gp' | tr ';' '\n' | grep material_bed_temperature | sed -ne 's/.* = /M190 S/p' | head -1 >> ${PLR_PATH}/"${plr}"
-cat $USER_HOME/plrtmpA.$$ | sed -ne '/;End of Gcode/,$ p' | tr '\n' ' ' | sed -ne 's/ ;[^ ]* //gp' | sed -ne 's/\\\\n/;/gp' | tr ';' '\n' | grep material_print_temperature | sed -ne 's/.* = /M109 S/p' | head -1 >> ${PLR_PATH}/"${plr}"
+cat $HOME_DIR/plrtmpA.$$ | sed '/ Z'${1}'/q' | sed -ne '/\(M104\|M140\|M109\|M190\|M106\)/p' >> ${PLR_PATH}/"${plr}"
+cat $HOME_DIR/plrtmpA.$$ | sed -ne '/;End of Gcode/,$ p' | tr '\n' ' ' | sed -ne 's/ ;[^ ]* //gp' | sed -ne 's/\\\\n/;/gp' | tr ';' '\n' | grep material_bed_temperature | sed -ne 's/.* = /M140 S/p' | head -1 >> ${PLR_PATH}/"${plr}"
+cat $HOME_DIR/plrtmpA.$$ | sed -ne '/;End of Gcode/,$ p' | tr '\n' ' ' | sed -ne 's/ ;[^ ]* //gp' | sed -ne 's/\\\\n/;/gp' | tr ';' '\n' | grep material_print_temperature | sed -ne 's/.* = /M104 S/p' | head -1 >> ${PLR_PATH}/"${plr}"
+cat $HOME_DIR/plrtmpA.$$ | sed -ne '/;End of Gcode/,$ p' | tr '\n' ' ' | sed -ne 's/ ;[^ ]* //gp' | sed -ne 's/\\\\n/;/gp' | tr ';' '\n' | grep material_bed_temperature | sed -ne 's/.* = /M190 S/p' | head -1 >> ${PLR_PATH}/"${plr}"
+cat $HOME_DIR/plrtmpA.$$ | sed -ne '/;End of Gcode/,$ p' | tr '\n' ' ' | sed -ne 's/ ;[^ ]* //gp' | sed -ne 's/\\\\n/;/gp' | tr ';' '\n' | grep material_print_temperature | sed -ne 's/.* = /M109 S/p' | head -1 >> ${PLR_PATH}/"${plr}"
 # cat /tmp/plrtmpA.$$ | sed -e '1,/ Z'${1}'[^0-9]*$/ d' | sed -e '/ Z/q' | tac | grep -m 1 ' E' | sed -ne 's/.* E\([^ ]*\)/G92 E\1/p' >> ${SD_PATH}/plr.gcode
 #tac /tmp/plrtmpA.$$ | sed -e '/ Z'${1}'[^0-9]*$/q' | tac | tail -n+2 | sed -e '/ Z[0-9]/ q' | tac | sed -e '/ E[0-9]/ q' | sed -ne 's/.* E\([^ ]*\)/G92 E\1/p' >> ${SD_PATH}/plr.gcode
-BG_EX=`tac $USER_HOME/plrtmpA.$$ | sed -e '/ Z'${1}'[^0-9]*$/q' | tac | tail -n+2 | sed -e '/ Z[0-9]/ q' | tac | sed -e '/ E[0-9]/ q' | sed -ne 's/.* E\([^ ]*\)/G92 E\1/p'`
+BG_EX=`tac $HOME_DIR/plrtmpA.$$ | sed -e '/ Z'${1}'[^0-9]*$/q' | tac | tail -n+2 | sed -e '/ Z[0-9]/ q' | tac | sed -e '/ E[0-9]/ q' | sed -ne 's/.* E\([^ ]*\)/G92 E\1/p'`
 # If we failed to match an extrusion command (allowing us to correctly set the E axis) prior to the matched layer height, then simply set the E axis to the first E value present in the resumed gcode. This avoids extruding a huge blob on resume, and/or max extrusion errors.
 if [ "${BG_EX}" = "" ]; then
- BG_EX=`tac $USER_HOME/plrtmpA.$$ | sed -e '/ Z'${1}'[^0-9]*$/q' | tac | tail -n+2 | sed -ne '/ Z/,$ p' | sed -e '/ E[0-9]/ q' | sed -ne 's/.* E\([^ ]*\)/G92 E\1/p'`
+ BG_EX=`tac $HOME_DIR/plrtmpA.$$ | sed -e '/ Z'${1}'[^0-9]*$/q' | tac | tail -n+2 | sed -ne '/ Z/,$ p' | sed -e '/ E[0-9]/ q' | sed -ne 's/.* E\([^ ]*\)/G92 E\1/p'`
 fi
-M83=$(cat $USER_HOME/plrtmpA.$$ | sed '/ Z'${1}'/q' | sed -ne '/\(M83\)/p')
+M83=$(cat $HOME_DIR/plrtmpA.$$ | sed '/ Z'${1}'/q' | sed -ne '/\(M83\)/p')
 if [ -n "${M83}" ];then
  echo 'G92 E0' >> ${PLR_PATH}/"${plr}"
  echo ${M83} >> ${PLR_PATH}/"${plr}"
@@ -79,5 +80,5 @@ echo 'G1 Z-5' >> ${PLR_PATH}/"${plr}"
 echo 'G90' >> ${PLR_PATH}/"${plr}"
 echo 'M106 S204' >> ${PLR_PATH}/"${plr}"
 # cat /tmp/plrtmpA.$$ | sed -e '1,/Z'${1}'/ d' | sed -ne '/ Z/,$ p' >> ${SD_PATH}/plr.gcode
-tac $USER_HOME/plrtmpA.$$ | sed -e '/ Z'${1}'[^0-9]*$/q' | tac | tail -n+2 | sed -ne '/ Z/,$ p' >> ${PLR_PATH}/"${plr}"
-rm $USER_HOME/plrtmpA.$$
+tac $HOME_DIR/plrtmpA.$$ | sed -e '/ Z'${1}'[^0-9]*$/q' | tac | tail -n+2 | sed -ne '/ Z/,$ p' >> ${PLR_PATH}/"${plr}"
+rm $HOME_DIR/plrtmpA.$$
